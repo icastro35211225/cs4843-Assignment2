@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: WebServer with EIP
+Description: Database
 Parameters:
   myVPC:
       Description: VPC used to deploy our resources below
@@ -25,15 +25,15 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/16
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/24
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/32
   myWebServerInstance: 
     Type: AWS::EC2::Instance
     Properties:
@@ -46,24 +46,14 @@ Resources:
           GroupSet: 
             - Ref: "myWebAccessSecurityGroup"
           SubnetId: 
-            Ref: "PublicSubnet"
+            Ref: "PrivateSubnet"
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
           yum install -y httpd
           systemctl start httpd
-  IPAddress:
-    Type: 'AWS::EC2::EIP'
-  IPAssoc:
-    Type: 'AWS::EC2::EIPAssociation'
-    Properties:
-      InstanceId: !Ref myWebServerInstance
-      EIP: !Ref IPAddress
 Outputs:
   myWebServerInstanceID:
     Description: InstanceId of the newly created EC2 instance
     Value: !Ref myWebServerInstance
-  myWebServerIPAddress:
-    Description: IP address of the newly created EC2 instance
-    Value: !Ref IPAddress
